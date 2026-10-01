@@ -49,8 +49,8 @@ const GK='enspeak.key';
 let key='';
 try{key=localStorage.getItem(GK)||key}catch(e){}
 
-const MODEL='gemini-2.0-flash';
-async function gem(parts, retries=3){
+const MODEL='gemini-1.5-flash';
+  async function gem(parts, retries=3){
   for(let i=0; i<retries; i++){
     try{
       const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+MODEL+':generateContent',{
