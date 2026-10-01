@@ -49,7 +49,7 @@ const GK='enspeak.key';
 let key='';
 try{key=localStorage.getItem(GK)||key}catch(e){}
 
-const MODEL='gemini-flash-latest';
+const MODEL='gemini-1.5-flash';
 async function gem(parts){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+MODEL+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{parts}],generationConfig:{responseMimeType:'application/json'}})});
  if(!r.ok)throw new Error(r.status+' '+(await r.text()).slice(0,140));const j=await r.json();return JSON.parse(j.candidates[0].content.parts[0].text)}
 async function shrink(f){try{const u=URL.createObjectURL(f);const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=u});const k=Math.min(1,1600/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);return {mime:'image/jpeg',data:c.toDataURL('image/jpeg',.85).split(',')[1]}}catch(e){const d=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f)});return {mime:f.type||'image/jpeg',data:d}}}
