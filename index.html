@@ -49,7 +49,7 @@ const GK='enspeak.key';
 let key='';
 try{key=localStorage.getItem(GK)||key}catch(e){}
 
-const MODEL='gemini-1.5-flash';
+const MODEL='gemini-3.8-flash';
   async function gem(parts, retries=3){
   for(let i=0; i<retries; i++){
     try{
