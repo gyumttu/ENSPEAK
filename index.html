@@ -49,9 +49,30 @@ const GK='enspeak.key';
 let key='';
 try{key=localStorage.getItem(GK)||key}catch(e){}
 
-const MODEL='gemini-1.5-flash';
-async function gem(parts){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+MODEL+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{parts}],generationConfig:{responseMimeType:'application/json'}})});
- if(!r.ok)throw new Error(r.status+' '+(await r.text()).slice(0,140));const j=await r.json();return JSON.parse(j.candidates[0].content.parts[0].text)}
+const MODEL='gemini-2.0-flash';
+async function gem(parts, retries=3){
+  for(let i=0; i<retries; i++){
+    try{
+      const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+MODEL+':generateContent',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-goog-api-key':key},
+        body:JSON.stringify({contents:[{parts}],generationConfig:{responseMimeType:'application/json'}})
+      });
+      if(!r.ok){
+        const txt=await r.text();
+        if((r.status===503 || r.status===429) && i < retries-1){
+          await new Promise(res=>setTimeout(res, 2000 * (i+1))); // 503 발생 시 2초 대기 후 자동 재시도
+          continue;
+        }
+        throw new Error(r.status+' '+txt.slice(0,140));
+      }
+      const j=await r.json();
+      return JSON.parse(j.candidates[0].content.parts[0].text);
+    }catch(e){
+      if(i===retries-1) throw e;
+    }
+  }
+}
 async function shrink(f){try{const u=URL.createObjectURL(f);const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=u});const k=Math.min(1,1600/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);return {mime:'image/jpeg',data:c.toDataURL('image/jpeg',.85).split(',')[1]}}catch(e){const d=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f)});return {mime:f.type||'image/jpeg',data:d}}}
 function saveKey(){key=document.getElementById('k').value.trim();try{localStorage.setItem(GK,key)}catch(e){}render()}
 function clearKey(){key='';try{localStorage.removeItem(GK)}catch(e){}render()}
